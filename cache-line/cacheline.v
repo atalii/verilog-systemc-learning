@@ -24,7 +24,10 @@ module cacheline (
       assign out_val = stored_val;
     end else if (write) begin
       assign hit = in_addr == stored_addr;
-      if (hit | force_write) stored_val = in_val;
+      if (hit | force_write) begin
+        stored_addr = in_addr;
+        stored_val  = in_val;
+      end
     end
     ;
   end
