@@ -6,7 +6,7 @@ int sc_main(int argc, char **argv) {
   Verilated::commandArgs(argc, argv);
   Vflipflop f{"main"};
 
-  sc_clock clk{"clk", 10, SC_NS, 0.5, 3, SC_NS, true};
+  sc_clock clk{"clk"};
   sc_signal<bool> d, q;
   f.clk(clk);
   f.d(d);
@@ -14,7 +14,7 @@ int sc_main(int argc, char **argv) {
 
   auto test = [&](auto val) {
           d.write(val);
-          sc_start(9, SC_NS);
+          sc_start(1, SC_NS);
           assert(q.read() == val);
   };
 
