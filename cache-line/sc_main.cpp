@@ -8,23 +8,21 @@ int sc_main(int argc, char **argv) {
   Verilated::commandArgs(argc, argv);
   Vcacheline line{"main"};
 
-  sc_signal<bool> read, write, force_write, hit;
+  sc_signal<bool> read, write, hit;
   sc_signal<uint32_t> in_val, out_val, in_addr;
   sc_clock clock;
 
   line.read(read);
   line.write(write);
-  line.force_write(force_write);
   line.hit(hit);
   line.in_val(in_val);
   line.out_val(out_val);
   line.in_addr(in_addr);
   line.clock(clock);
 
-  auto put = [&](uint32_t addr, uint32_t val, bool force = false) {
+  auto put = [&](uint32_t addr, uint32_t val) {
     read.write(false);
     write.write(true);
-    force_write.write(force);
     in_addr.write(addr);
     in_val.write(val);
 
@@ -42,15 +40,22 @@ int sc_main(int argc, char **argv) {
 
   // Just some test values.
 
+  // On our first access, the line will be ready to evict the (0, 0) (addr, val)
+  // pair inside, so it'll store our 1.
   put(1, 1);
-  assert(get(1) == std::nullopt);
-
-  put(1, 1, true);
   assert(get(1) == std::optional{1});
-  assert(get(2) == std::nullopt);
+
+  // This will succeed as well.
   put(1, 2);
   assert(get(1) == std::optional{2});
-  assert(get(1) == std::optional{2});
+
+  // This will fail and set the clock counter to 0.
+  put(2, 0);
+  assert(get(2) == std::nullopt);
+
+  // But trying again will succeed!
+  put(2, 0);
+  assert(get(2) == std::optional{0});
 
   return 0;
 }
