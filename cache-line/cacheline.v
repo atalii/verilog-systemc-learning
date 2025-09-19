@@ -16,6 +16,7 @@ module cacheline (
 
   reg [7:0] stored_addr;
   reg [31:0] stored_val;
+  // use a control bit and r/w
 
   // Set to 1 at an access.
   reg clock_counter;
