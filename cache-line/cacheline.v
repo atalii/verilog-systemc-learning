@@ -21,19 +21,22 @@ module cacheline (
   // Set to 1 at an access.
   reg clock_counter;
 
-  always @(posedge clock) begin
-    if (read) begin
-      out_val = stored_val;
-      hit = stored_addr == in_addr;
-    end else if (write) begin
-      hit = ~clock_counter | (in_addr == stored_addr);
-      if (hit) begin
-        stored_addr = in_addr;
-        stored_val  = in_val;
-      end
-    end
-    ;
+  assign out_val = stored_val;
 
-    clock_counter = hit;
+  always @(posedge clock) begin
+    hit <= read & (stored_addr == in_addr);
+    clock_counter <= clock_counter | (stored_addr == in_addr);
+  end
+
+  always @(posedge clock) begin
+    if (write) begin
+      hit <= !clock_counter | (in_addr == stored_addr);
+      if (!clock_counter | in_addr == stored_addr) begin
+        stored_addr <= in_addr;
+        stored_val  <= in_val;
+      end
+
+      clock_counter <= !clock_counter | (in_addr == stored_addr);
+    end
   end
 endmodule
