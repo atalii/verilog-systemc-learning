@@ -23,10 +23,10 @@ module cacheline (
 
   always @(posedge clock) begin
     if (read) begin
-      assign out_val = stored_val;
-      assign hit = stored_addr == in_addr;
+      out_val = stored_val;
+      hit = stored_addr == in_addr;
     end else if (write) begin
-      assign hit = ~clock_counter | (in_addr == stored_addr);
+      hit = ~clock_counter | (in_addr == stored_addr);
       if (hit) begin
         stored_addr = in_addr;
         stored_val  = in_val;
@@ -34,6 +34,6 @@ module cacheline (
     end
     ;
 
-    assign clock_counter = hit;
+    clock_counter = hit;
   end
 endmodule
