@@ -14,60 +14,40 @@ module cache (
   output reg [31:0] out_val;
   output reg hit;
 
-  reg a_write, a_hit, b_write, b_hit;
-  reg [31:0] a_out_val, b_out_val;
+  reg [31:0] val_a, val_b;
+  reg [7:0] addr_a, addr_b;
+  reg clock_count_a, clock_count_b;
 
-  // Store which register we'll try to write to first.
-  reg which_write;
-  // Store whether or not we're currently attempting to write.
-  reg writing;
-
-  cacheline a (
-      .in_addr(in_addr),
-      .in_val(in_val),
-      .read(read),
-      .write(a_write),
-      .clock(clock),
-      .hit(a_hit),
-      .out_val(a_out_val)
-  );
-
-  cacheline b (
-      .in_addr(in_addr),
-      .in_val(in_val),
-      .read(read),
-      .write(b_write),
-      .clock(clock),
-      .hit(b_hit),
-      .out_val(b_out_val)
-  );
+  reg write_state = 0;
 
   always @(posedge clock) begin
     if (read) begin
-      hit <= a_hit | b_hit;
-      out_val <= a_hit ? a_out_val : b_out_val;
+      hit <= (addr_a == in_addr) | (addr_b == in_addr);
+      out_val <= (addr_a == in_addr) ? val_a : val_b;
     end
   end
 
   always @(posedge clock) begin
-    if (write & !writing) begin
-      // Start the write process.
-      a_write <= !which_write;
-      b_write <= which_write;
-      hit <= 0;
-      writing <= 1;
+    if (write) begin
+      // We'll match on where we are in the state machine.
+      unique case (write_state)
+      0: begin
+        // If we're just receiving the write request, look for any matches.
+        val_a <= (addr_a == in_addr) ? in_val : val_a;
+        val_b <= (addr_b == in_addr) ? in_val : val_b;
+        hit <= (addr_a == in_addr) | (addr_b == in_addr);
+
+        // Set the write_state high iff we haven't hit anything in the cache.
+        write_state <= (addr_a != in_addr) & (addr_b != in_addr);
+      end
+
+      1: begin
+        // TODO: start CLOCKing through the cache.
+        write_state <= 0;
+        hit <= 1;
+      end
+
+      endcase
     end
   end
-
-  always @(posedge clock) begin
-    if (write & writing) begin
-      // Continue the write process. This means that we check for a hit, and,
-      // if we failed, look at the next line.
-      a_write <= !(a_hit | b_hit) & !a_write;
-      b_write <= !(a_hit | b_hit) & !b_write;
-      writing <= !(a_hit | b_hit);
-      hit <= a_hit | b_hit;
-    end
-  end
-
 endmodule
