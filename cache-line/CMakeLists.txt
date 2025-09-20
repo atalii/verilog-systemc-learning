@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 3.25)
 project(cache)
 
 set(SYSTEMC_HOME $ENV{SYSTEMC_HOME})
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 include_directories(${SYSTEMC_HOME}/include)
 link_directories(${SYSTEMC_HOME}/lib)
 
