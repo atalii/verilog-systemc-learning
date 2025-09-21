@@ -16,7 +16,8 @@ module cache (
 
   reg [31:0] val_a, val_b;
   reg [7:0] addr_a, addr_b;
-  reg clock_count_a, clock_count_b;
+  reg clock_count_a = 0, clock_count_b = 0;
+  reg clock_ptr = 0;
 
   reg write_state = 0;
 
@@ -42,9 +43,17 @@ module cache (
       end
 
       1: begin
-        // TODO: start CLOCKing through the cache.
-        write_state <= 0;
-        hit <= 1;
+        // CLOCK through the two values.
+        clock_ptr <= !clock_ptr;
+
+        if ((clock_ptr ? clock_count_a : clock_count_b) == 0) begin
+          addr_a <= clock_ptr ? in_addr : addr_a;
+          addr_b <= clock_ptr ? addr_b : in_addr;
+          val_a <= clock_ptr ? in_val : val_a;
+          val_b <= clock_ptr ? val_b : in_val;
+          hit <= 1;
+          write_state <= 0;
+        end
       end
 
       endcase
