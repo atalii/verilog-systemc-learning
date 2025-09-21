@@ -7,15 +7,18 @@ module cache (
     hit,
     out_val
 );
-  input reg [7:0] in_addr;
-  input reg [31:0] in_val;
+  parameter integer ADDR_WIDTH = 8;
+  parameter integer LINE_WIDTH = 32;
+
+  input reg [ADDR_WIDTH - 1:0] in_addr;
+  input reg [LINE_WIDTH - 1:0] in_val;
   input wire read, write, clock;
 
-  output reg [31:0] out_val;
+  output reg [LINE_WIDTH - 1:0] out_val;
   output reg hit;
 
-  reg [31:0] val_a, val_b;
-  reg [7:0] addr_a, addr_b;
+  reg [LINE_WIDTH - 1:0] val_a, val_b;
+  reg [ADDR_WIDTH - 1:0] addr_a, addr_b;
   reg clock_count_a = 0, clock_count_b = 0;
   reg clock_ptr = 0;
 

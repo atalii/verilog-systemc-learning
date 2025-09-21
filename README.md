@@ -7,5 +7,5 @@ There's also a cache with CLOCK eviction :\)
 
 TODOs:
 + [ ] Arbitrarily large caches
-+ [ ] Paramaterize line, address sizes
++ [x] Paramaterize line, address sizes
 + [ ] Concurrent reading/writing
