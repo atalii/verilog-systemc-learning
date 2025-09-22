@@ -18,6 +18,15 @@ module cache #(
 
   reg write_state = 0;
 
+  function automatic check_for_hit();
+    reg accumulator = 0;
+    integer i;
+    for (i = 0; i < K; i++) begin
+      accumulator = accumulator || (addrs[i] == in_addr);
+    end
+    check_for_hit = accumulator;
+  endfunction
+
   always @(posedge clock) begin
     if (read) begin
       integer i;
@@ -28,7 +37,8 @@ module cache #(
         end
       end
 
-      hit <= in_addr inside {addrs};
+      // TODO: how do we describe this without using SystemVerilog?
+      hit <= check_for_hit();
     end
   end
 
@@ -46,10 +56,10 @@ module cache #(
           end
         end
 
-        hit <= in_addr inside {addrs};
+        hit <= check_for_hit();
 
         // Set the write_state high iff we haven't hit anything in the cache.
-        write_state <= !(in_addr inside {addrs});
+        write_state <= !check_for_hit();
       end
 
       1: begin
