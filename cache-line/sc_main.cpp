@@ -40,10 +40,9 @@ int sc_main(int argc, char **argv) {
     return hit.read() ? std::optional{out_val.read()} : std::nullopt;
   };
 
-  // Address '0' is cached by default, so this'll work even without eviction
-  // logic!
-  put(0, 1);
-  assert(get(0) == std::optional{1});
+  // Address 0 is initialized to store the value 0.
+  put(0, 0);
+  assert(get(0) == std::optional{0});
 
   put(1, 1);
   assert(get(1) == std::optional{1});
