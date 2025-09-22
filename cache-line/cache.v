@@ -9,6 +9,7 @@ module cache (
 );
   parameter integer ADDR_WIDTH = 8;
   parameter integer LINE_WIDTH = 32;
+  parameter integer K = 2;
 
   input reg [ADDR_WIDTH - 1:0] in_addr;
   input reg [LINE_WIDTH - 1:0] in_val;
@@ -17,9 +18,9 @@ module cache (
   output reg [LINE_WIDTH - 1:0] out_val;
   output reg hit;
 
-  reg [LINE_WIDTH - 1:0] vals[2];
-  reg [ADDR_WIDTH - 1:0] addrs[2];
-  reg clock_counts[2];
+  reg [LINE_WIDTH - 1:0] vals[K];
+  reg [ADDR_WIDTH - 1:0] addrs[K];
+  reg clock_counts[K];
   reg clock_ptr = 0;
 
   reg write_state = 0;
@@ -27,7 +28,7 @@ module cache (
   always @(posedge clock) begin
     if (read) begin
       integer i;
-      for (i = 0; i < 2; i++) begin
+      for (i = 0; i < K; i++) begin
         if (addrs[i] == in_addr) begin
           out_val <= vals[i];
           clock_counts[i] <= 1;
@@ -45,7 +46,7 @@ module cache (
       0: begin
         // If we're just receiving the write request, look for any matches.
         integer i;
-        for (i = 0; i < 2; i++) begin
+        for (i = 0; i < K; i++) begin
           if (addrs[i] == in_addr) begin
             vals[i] <= in_val;
             clock_counts[i] <= 1;
