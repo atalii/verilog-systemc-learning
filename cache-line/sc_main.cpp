@@ -61,5 +61,7 @@ int sc_main(int argc, char **argv) {
   assert(get(3) == std::optional{10});
   assert(get(1) == std::optional{2} || get(2) == std::optional{1});
 
+  assert(get(100) == std::nullopt);
+
   return 0;
 }

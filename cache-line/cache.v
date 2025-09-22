@@ -26,11 +26,15 @@ module cache (
 
   always @(posedge clock) begin
     if (read) begin
-      hit <= (addrs[0] == in_addr) | (addrs[1] == in_addr);
-      out_val <= (addrs[0] == in_addr) ? vals[0] : vals[1];
+      integer i;
+      for (i = 0; i < 2; i++) begin
+        if (addrs[i] == in_addr) begin
+          out_val <= vals[i];
+          clock_counts[i] <= 1;
+        end
+      end
 
-      clock_counts[0] <= addrs[0] == in_addr ? 1 : clock_counts[0];
-      clock_counts[1] <= addrs[1] == in_addr ? 1 : clock_counts[1];
+      hit <= in_addr inside {addrs};
     end
   end
 
@@ -40,14 +44,18 @@ module cache (
       unique case (write_state)
       0: begin
         // If we're just receiving the write request, look for any matches.
-        vals[0] <= (addrs[0] == in_addr) ? in_val : vals[0];
-        vals[1] <= (addrs[1] == in_addr) ? in_val : vals[1];
-        clock_counts[0] <= (addrs[0] == in_addr) ? 1 : clock_counts[0];
-        clock_counts[1] <= (addrs[1] == in_addr) ? 1 : clock_counts[1];
-        hit <= (addrs[0] == in_addr) | (addrs[1] == in_addr);
+        integer i;
+        for (i = 0; i < 2; i++) begin
+          if (addrs[i] == in_addr) begin
+            vals[i] <= in_val;
+            clock_counts[i] <= 1;
+          end
+        end
+
+        hit <= in_addr inside {addrs};
 
         // Set the write_state high iff we haven't hit anything in the cache.
-        write_state <= (addrs[0] != in_addr) & (addrs[1] != in_addr);
+        write_state <= !(in_addr inside {addrs});
       end
 
       1: begin
@@ -56,19 +64,12 @@ module cache (
 
         if (clock_counts[clock_ptr] == 0) begin
           // Evict what we're looking at.
-          addrs[0] <= clock_ptr ? addrs[0] : in_addr;
-          addrs[1] <= clock_ptr ? in_addr : addrs[1];
-          vals[0] <= clock_ptr ? vals[0] : in_val;
-          vals[1] <= clock_ptr ? in_val : vals[1];
-          clock_counts[0] <= clock_ptr ? 1 : clock_counts[0];
-          clock_counts[1] <= clock_ptr ? clock_counts[1] : 1;
+          addrs[clock_ptr] <= in_addr;
+          vals[clock_ptr] <= in_val;
+          clock_counts[clock_ptr] <= 1;
           hit <= 1;
           write_state <= 0;
-        end else begin
-          // Decrement the CLOCK counter.
-          clock_counts[0] <= clock_ptr ? clock_counts[0] : 0;
-          clock_counts[1] <= clock_ptr ? 0 : clock_counts[1];
-        end
+        end else clock_counts[clock_ptr] <= 0; // Decrement the CLOCK counter.
       end
 
       endcase
