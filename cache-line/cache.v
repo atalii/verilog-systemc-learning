@@ -18,10 +18,12 @@ module cache #(
 
   reg write_state = 0;
 
+  reg accumulator;
+
   function automatic check_for_hit();
-    reg accumulator = 0;
-    integer i;
-    for (i = 0; i < K; i++) begin
+    accumulator = 0;
+
+    for (integer i = 0; i < K; i++) begin
       accumulator = accumulator || (addrs[i] == in_addr);
     end
     check_for_hit = accumulator;
