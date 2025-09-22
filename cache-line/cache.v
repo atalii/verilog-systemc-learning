@@ -14,7 +14,7 @@ module cache #(
   reg [LINE_WIDTH - 1:0] vals[K];
   reg [ADDR_WIDTH - 1:0] addrs[K];
   reg clock_counts[K];
-  reg clock_ptr = 0;
+  reg [$clog2(K) - 1:0] clock_ptr = 0;
 
   reg write_state = 0;
 
@@ -66,7 +66,7 @@ module cache #(
 
       1: begin
         // CLOCK through the two values.
-        clock_ptr <= !clock_ptr;
+        clock_ptr <= clock_ptr + 1;
 
         if (clock_counts[clock_ptr] == 0) begin
           // Evict what we're looking at.
