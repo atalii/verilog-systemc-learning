@@ -1,23 +1,16 @@
-module cache (
-    in_addr,
-    in_val,
-    read,
-    write,
-    clock,
-    hit,
-    out_val
+module cache #(
+  parameter integer ADDR_WIDTH = 8,
+  parameter integer LINE_WIDTH = 32,
+  parameter integer K = 2
+)(
+    input reg [ADDR_WIDTH - 1:0] in_addr,
+    input reg [LINE_WIDTH - 1:0] in_val,
+    input wire read,
+    input wire write,
+    input wire clock,
+    output reg hit,
+    output reg [LINE_WIDTH - 1:0] out_val
 );
-  parameter integer ADDR_WIDTH = 8;
-  parameter integer LINE_WIDTH = 32;
-  parameter integer K = 2;
-
-  input reg [ADDR_WIDTH - 1:0] in_addr;
-  input reg [LINE_WIDTH - 1:0] in_val;
-  input wire read, write, clock;
-
-  output reg [LINE_WIDTH - 1:0] out_val;
-  output reg hit;
-
   reg [LINE_WIDTH - 1:0] vals[K];
   reg [ADDR_WIDTH - 1:0] addrs[K];
   reg clock_counts[K];
