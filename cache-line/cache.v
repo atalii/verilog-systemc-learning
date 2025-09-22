@@ -28,6 +28,9 @@ module cache (
     if (read) begin
       hit <= (addr_a == in_addr) | (addr_b == in_addr);
       out_val <= (addr_a == in_addr) ? val_a : val_b;
+
+      clock_count_a <= addr_a == in_addr ? 1 : clock_count_a;
+      clock_count_b <= addr_b == in_addr ? 1 : clock_count_b;
     end
   end
 
@@ -39,6 +42,8 @@ module cache (
         // If we're just receiving the write request, look for any matches.
         val_a <= (addr_a == in_addr) ? in_val : val_a;
         val_b <= (addr_b == in_addr) ? in_val : val_b;
+        clock_count_a <= (addr_a == in_addr) ? 1 : clock_count_a;
+        clock_count_b <= (addr_b == in_addr) ? 1 : clock_count_b;
         hit <= (addr_a == in_addr) | (addr_b == in_addr);
 
         // Set the write_state high iff we haven't hit anything in the cache.
@@ -49,13 +54,20 @@ module cache (
         // CLOCK through the two values.
         clock_ptr <= !clock_ptr;
 
-        if ((clock_ptr ? clock_count_a : clock_count_b) == 0) begin
-          addr_a <= clock_ptr ? in_addr : addr_a;
-          addr_b <= clock_ptr ? addr_b : in_addr;
-          val_a <= clock_ptr ? in_val : val_a;
-          val_b <= clock_ptr ? val_b : in_val;
+        if ((clock_ptr ? clock_count_b : clock_count_a) == 0) begin
+          // Evict what we're looking at.
+          addr_a <= clock_ptr ? addr_a : in_addr;
+          addr_b <= clock_ptr ? in_addr : addr_b;
+          val_a <= clock_ptr ? val_a : in_val;
+          val_b <= clock_ptr ? in_val : val_b;
+          clock_count_a <= clock_ptr ? 1 : clock_count_a;
+          clock_count_b <= clock_ptr ? clock_count_b : 1;
           hit <= 1;
           write_state <= 0;
+        end else begin
+          // Decrement the CLOCK counter.
+          clock_count_a <= clock_ptr ? clock_count_a : 0;
+          clock_count_b <= clock_ptr ? 0 : clock_count_b;
         end
       end
 

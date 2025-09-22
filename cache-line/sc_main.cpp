@@ -57,5 +57,9 @@ int sc_main(int argc, char **argv) {
   put(2, 1);
   assert(get(2) == std::optional{1});
 
+  put(3, 10);
+  assert(get(3) == std::optional{10});
+  assert(get(1) == std::optional{2} || get(2) == std::optional{1});
+
   return 0;
 }
