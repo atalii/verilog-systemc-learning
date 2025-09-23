@@ -39,7 +39,6 @@ module cache #(
         end
       end
 
-      // TODO: how do we describe this without using SystemVerilog?
       hit <= check_for_hit();
     end
   end
