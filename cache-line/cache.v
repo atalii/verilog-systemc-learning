@@ -3,8 +3,8 @@ module cache #(
   parameter integer LINE_WIDTH = 32,
   parameter integer K = 2
 )(
-    input reg [ADDR_WIDTH - 1:0] in_addr,
-    input reg [LINE_WIDTH - 1:0] in_val,
+    input wire [ADDR_WIDTH - 1:0] in_addr,
+    input wire [LINE_WIDTH - 1:0] in_val,
     input wire read,
     input wire write,
     input wire clock,
