@@ -41,6 +41,7 @@ int sc_main(int argc, char **argv) {
   };
 
   // Address 0 is initialized to store the value 0.
+  assert(get(0) == std::nullopt);
   put(0, 0);
   assert(get(0) == std::optional{0});
 

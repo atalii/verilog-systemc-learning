@@ -13,6 +13,7 @@ module cache #(
 );
   reg [LINE_WIDTH - 1:0] vals[K];
   reg [ADDR_WIDTH - 1:0] addrs[K];
+  reg valid_bits[K];
   reg clock_counts[K];
   reg [$clog2(K) - 1:0] clock_ptr = 0;
 
@@ -24,7 +25,7 @@ module cache #(
     accumulator = 0;
 
     for (integer i = 0; i < K; i++) begin
-      accumulator = accumulator || (addrs[i] == in_addr);
+      accumulator = accumulator || (addrs[i] == in_addr && valid_bits[i]);
     end
     check_for_hit = accumulator;
   endfunction
@@ -33,7 +34,7 @@ module cache #(
     if (read) begin
       integer i;
       for (i = 0; i < K; i++) begin
-        if (addrs[i] == in_addr) begin
+        if (addrs[i] == in_addr && valid_bits[i]) begin
           out_val <= vals[i];
           clock_counts[i] <= 1;
         end
@@ -54,6 +55,7 @@ module cache #(
           if (addrs[i] == in_addr) begin
             vals[i] <= in_val;
             clock_counts[i] <= 1;
+            valid_bits[i] = 1;
           end
         end
 
@@ -72,6 +74,7 @@ module cache #(
           addrs[clock_ptr] <= in_addr;
           vals[clock_ptr] <= in_val;
           clock_counts[clock_ptr] <= 1;
+          valid_bits[clock_ptr] = 1;
           hit <= 1;
           write_state <= 0;
         end else clock_counts[clock_ptr] <= 0; // Decrement the CLOCK counter.
