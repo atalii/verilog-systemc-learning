@@ -1,26 +1,32 @@
-#include <optional>
 #include <gtest/gtest.h>
+#include <optional>
 
 #include "Vcache.h"
 
 using namespace sc_core;
 
-TEST(cache, endToEnd) {
-  sc_signal<bool> read, write, hit;
-  sc_signal<uint32_t> in_val, out_val, in_addr;
-  sc_clock clock;
+class CacheTest : public testing::Test {
+private:
+  static sc_signal<bool> read, write, hit;
+  static sc_signal<uint32_t> in_val, out_val, in_addr;
+  static sc_clock clock;
+  static Vcache bank;
 
-  Vcache bank{"bank"};
+protected:
+  CacheTest() = default;
 
-  bank.read(read);
-  bank.write(write);
-  bank.hit(hit);
-  bank.in_val(in_val);
-  bank.out_val(out_val);
-  bank.in_addr(in_addr);
-  bank.clock(clock);
+  static void SetUpTestSuite() {
+    bank.read(read);
+    bank.write(write);
+    bank.hit(hit);
+    bank.in_val(in_val);
+    bank.out_val(out_val);
+    bank.in_addr(in_addr);
+    bank.clock(clock);
+  }
 
-  auto put = [&](uint32_t addr, uint32_t val) {
+public:
+  void put(uint32_t addr, uint32_t val) {
     read.write(false);
     write.write(true);
     in_addr.write(addr);
@@ -29,18 +35,40 @@ TEST(cache, endToEnd) {
     do {
       sc_start(1, SC_NS);
     } while (!hit.read());
-  };
+  }
 
-  auto get = [&](uint32_t addr) -> std::optional<uint32_t> {
+  std::optional<uint32_t> get(uint32_t addr) {
     read.write(true);
     write.write(false);
     in_addr.write(addr);
     sc_start(1, SC_NS);
 
     return hit.read() ? std::optional{out_val.read()} : std::nullopt;
-  };
+  }
+};
 
-  // Address 0 is initialized to store the value 0.
+sc_signal<bool> CacheTest::read, CacheTest::write, CacheTest::hit;
+sc_signal<uint32_t> CacheTest::in_val, CacheTest::out_val, CacheTest::in_addr;
+sc_clock CacheTest::clock;
+Vcache CacheTest::bank{"bank"};
+
+// Arbitrarily check through the first 1024 addresses.
+//
+// XXX: GTest runs tests in the order they find them, which happens to put
+// this first. Since we also don't run tests in parallel at any point, this is
+// okay. If there's a better way to ensure that this invariant is held at
+// object construction, it would be good to use here.
+//
+// Note that we can't just use one copy of the class per instance (i.e., the
+// class needs to have static member variables) because SystemC doesn't allow
+// us to run multiple simulations or restart an existing simulation from
+// within the process.
+TEST_F(CacheTest, startsEmpty) {
+  for (uint32_t addr = 0; addr < 1024; addr++)
+    ASSERT_FALSE(get(addr));
+}
+
+TEST_F(CacheTest, endToEnd) {
   assert(get(0) == std::nullopt);
   put(0, 0);
   assert(get(0) == std::optional{0});
