@@ -1,16 +1,16 @@
 #include <optional>
+#include <gtest/gtest.h>
 
 #include "Vcache.h"
 
 using namespace sc_core;
 
-int sc_main(int argc, char **argv) {
-  Verilated::commandArgs(argc, argv);
-  Vcache bank{"main"};
-
+TEST(cache, endToEnd) {
   sc_signal<bool> read, write, hit;
   sc_signal<uint32_t> in_val, out_val, in_addr;
   sc_clock clock;
+
+  Vcache bank{"bank"};
 
   bank.read(read);
   bank.write(write);
@@ -62,6 +62,10 @@ int sc_main(int argc, char **argv) {
   assert(get(1) == std::optional{2} || get(2) == std::optional{1});
 
   assert(get(100) == std::nullopt);
+}
 
-  return 0;
+int sc_main(int argc, char **argv) {
+  Verilated::commandArgs(argc, argv);
+  testing::InitGoogleTest();
+  return RUN_ALL_TESTS();
 }
