@@ -9,6 +9,5 @@ link_directories(${SYSTEMC_HOME}/lib)
 
 find_package(verilator)
 add_executable(cache sc_main.cpp)
-verilate(cache SOURCES cacheline.v SYSTEMC)
 verilate(cache SOURCES cache.v SYSTEMC)
 verilator_link_systemc(cache)
