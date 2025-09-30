@@ -17,9 +17,12 @@ module cache #(
     output reg ch2_hit,
     output reg [LINE_WIDTH - 1:0] ch2_out_val
 );
+  typedef bit [ADDR_WIDTH - 1:0] addr_t;
+  typedef bit [LINE_WIDTH - 1:0] val_t;
+
   typedef struct packed {
-    bit [LINE_WIDTH - 1:0] val;
-    bit [ADDR_WIDTH - 1:0] addr;
+    val_t val;
+    addr_t addr;
     bit clock;
     bit valid;
   } line_t;
@@ -41,7 +44,7 @@ module cache #(
     check_for_hit = accumulator;
   endfunction
 
-  task automatic read (input [ADDR_WIDTH - 1:0] addr, input integer channel);
+  task automatic read (input addr_t addr, input integer channel);
     if (channel == 1 && ch1_read || (channel == 2 && ch2_read)) begin
       for (integer i = 0; i < K; i++) begin
         if (lines[i].addr == addr && lines[i].valid) begin
