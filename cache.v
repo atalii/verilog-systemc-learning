@@ -17,10 +17,14 @@ module cache #(
     output reg ch2_hit,
     output reg [LINE_WIDTH - 1:0] ch2_out_val
 );
-  reg [LINE_WIDTH - 1:0] vals[K];
-  reg [ADDR_WIDTH - 1:0] addrs[K];
-  reg valid_bits[K];
-  reg clock_counts[K];
+  typedef struct {
+    bit [LINE_WIDTH - 1:0] val;
+    bit [ADDR_WIDTH - 1:0] addr;
+    bit clock;
+    bit valid;
+  } line_t;
+
+  line_t lines[K];
   reg [$clog2(K) - 1:0] clock_ptr = 0;
 
   reg write_state = 0;
@@ -31,8 +35,8 @@ module cache #(
     accumulator = 0;
 
     for (integer i = 0; i < K; i++) begin
-      accumulator = accumulator || (addrs[i] ==
-        (ch == 1 ? ch1_in_addr : ch2_in_addr) && valid_bits[i]);
+      accumulator = accumulator || (lines[i].addr ==
+        (ch == 1 ? ch1_in_addr : ch2_in_addr) && lines[i].valid);
     end
     check_for_hit = accumulator;
   endfunction
@@ -41,9 +45,9 @@ module cache #(
     if (ch1_read) begin
       integer i;
       for (i = 0; i < K; i++) begin
-        if (addrs[i] == ch1_in_addr && valid_bits[i]) begin
-          ch1_out_val <= vals[i];
-          clock_counts[i] <= 1;
+        if (lines[i].addr == ch1_in_addr && lines[i].valid) begin
+          ch1_out_val <= lines[i].val;
+          lines[i].clock <= 1;
         end
       end
 
@@ -52,9 +56,9 @@ module cache #(
 
     if (ch2_read) begin
       for (integer i = 0; i < K; i++) begin
-        if (addrs[i] == ch2_in_addr && valid_bits[i]) begin
-          ch2_out_val <= vals[i];
-          clock_counts[i] <= 1;
+        if (lines[i].addr == ch2_in_addr && lines[i].valid) begin
+          ch2_out_val <= lines[i].val;
+          lines[i].clock <= 1;
         end
       end
 
@@ -70,10 +74,10 @@ module cache #(
         // If we're just receiving the write request, look for any matches.
         integer i;
         for (i = 0; i < K; i++) begin
-          if (addrs[i] == ch1_in_addr) begin
-            vals[i] <= ch1_in_val;
-            clock_counts[i] <= 1;
-            valid_bits[i] = 1;
+          if (lines[i].addr == ch1_in_addr) begin
+            lines[i].val <= ch1_in_val;
+            lines[i].clock <= 1;
+            lines[i].valid <= 1;
           end
         end
 
@@ -87,15 +91,12 @@ module cache #(
         // CLOCK through the two values.
         clock_ptr <= clock_ptr + 1;
 
-        if (clock_counts[clock_ptr] == 0) begin
+        if (lines[clock_ptr].clock == 0) begin
           // Evict what we're looking at.
-          addrs[clock_ptr] <= ch1_in_addr;
-          vals[clock_ptr] <= ch1_in_val;
-          clock_counts[clock_ptr] <= 1;
-          valid_bits[clock_ptr] = 1;
+          lines[clock_ptr] <= '{ch1_in_val, ch1_in_addr, 1, 1};
           ch1_hit <= 1;
           write_state <= 0;
-        end else clock_counts[clock_ptr] <= 0; // Decrement the CLOCK counter.
+        end else lines[clock_ptr].clock <= 0; // Decrement the CLOCK counter.
       end
 
       endcase
