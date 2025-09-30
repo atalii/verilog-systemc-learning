@@ -41,29 +41,23 @@ module cache #(
     check_for_hit = accumulator;
   endfunction
 
-  always @(posedge clock) begin
-    if (ch1_read) begin
-      integer i;
-      for (i = 0; i < K; i++) begin
-        if (lines[i].addr == ch1_in_addr && lines[i].valid) begin
-          ch1_out_val <= lines[i].val;
-          lines[i].clock <= 1;
-        end
-      end
-
-      ch1_hit <= check_for_hit(1);
-    end
-
-    if (ch2_read) begin
+  task automatic read (input [ADDR_WIDTH - 1:0] addr, input integer channel);
+    if (channel == 1 && ch1_read || (channel == 2 && ch2_read)) begin
       for (integer i = 0; i < K; i++) begin
-        if (lines[i].addr == ch2_in_addr && lines[i].valid) begin
-          ch2_out_val <= lines[i].val;
-          lines[i].clock <= 1;
+        if (lines[i].addr == addr && lines[i].valid) begin
+          if (channel == 1) ch1_out_val <= lines[i].val;
+          else if (channel == 2) ch2_out_val <= lines[i].val;
         end
       end
 
-      ch2_hit <= check_for_hit(2);
+      if (channel == 1) ch1_hit <= check_for_hit(channel);
+      if (channel == 2) ch2_hit <= check_for_hit(channel);
     end
+  endtask
+
+  always @(posedge clock) begin
+    read(ch1_in_addr, 1);
+    read(ch2_in_addr, 2);
   end
 
   always @(posedge clock) begin
