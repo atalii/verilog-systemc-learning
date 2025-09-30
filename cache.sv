@@ -17,7 +17,7 @@ module cache #(
     output reg ch2_hit,
     output reg [LINE_WIDTH - 1:0] ch2_out_val
 );
-  typedef struct {
+  typedef struct packed {
     bit [LINE_WIDTH - 1:0] val;
     bit [ADDR_WIDTH - 1:0] addr;
     bit clock;
@@ -85,12 +85,20 @@ module cache #(
         // CLOCK through the two values.
         clock_ptr <= clock_ptr + 1;
 
-        if (lines[clock_ptr].clock == 0) begin
-          // Evict what we're looking at.
-          lines[clock_ptr] <= '{ch1_in_val, ch1_in_addr, 1, 1};
-          ch1_hit <= 1;
-          write_state <= 0;
-        end else lines[clock_ptr].clock <= 0; // Decrement the CLOCK counter.
+        for (integer i = 0; i < K; i++) begin
+          if (i == integer'(clock_ptr)) begin
+            if (lines[i].clock == 0) begin
+              // Evict what we're looking at.
+              lines[i].addr <= ch1_in_addr;
+              lines[i].val <= ch1_in_val;
+              lines[i].valid <= 1;
+              lines[i].clock <= 1;
+
+              ch1_hit <= 1;
+              write_state <= 0;
+            end else lines[i].clock <= 0; // Decrement the CLOCK counter.
+          end;
+        end
       end
 
       endcase
