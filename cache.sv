@@ -61,9 +61,7 @@ module cache #(
   always @(posedge clock) begin
     read(ch1_in_addr, 1);
     read(ch2_in_addr, 2);
-  end
 
-  always @(posedge clock) begin
     if (ch1_write) begin
       // We'll match on where we are in the state machine.
       unique case (write_state)
