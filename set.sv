@@ -1,10 +1,9 @@
-module cache #(
+module set #(
   parameter integer ADDR_WIDTH = 8,
   parameter integer LINE_WIDTH = 32,
   parameter integer K = 2
 )(
     input wire clock,
-
     input wire [ADDR_WIDTH - 1:0] ch1_in_addr,
     input wire [LINE_WIDTH - 1:0] ch1_in_val,
     input wire ch1_read,

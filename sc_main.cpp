@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 #include <optional>
 
-#include "Vcache.h"
+#include "Vset.h"
 
 using namespace sc_core;
 
@@ -11,7 +11,7 @@ private:
   static sc_signal<uint32_t> ch1_in_val, ch1_out_val, ch2_out_val, ch1_in_addr,
       ch2_in_addr;
   static sc_clock clock;
-  static Vcache bank;
+  static Vset bank;
 
 protected:
   CacheTest() = default;
@@ -80,7 +80,7 @@ sc_signal<bool> CacheTest::ch1_read, CacheTest::ch2_read, CacheTest::ch1_write,
 sc_signal<uint32_t> CacheTest::ch1_in_val, CacheTest::ch1_out_val,
     CacheTest::ch2_out_val, CacheTest::ch1_in_addr, CacheTest::ch2_in_addr;
 sc_clock CacheTest::clock;
-Vcache CacheTest::bank{"bank"};
+Vset CacheTest::bank{"bank"};
 
 // Arbitrarily check through the first 1024 addresses.
 //

@@ -22,5 +22,5 @@ enable_testing()
 add_executable(cache sc_main.cpp)
 target_link_libraries(cache PRIVATE GTest::gtest_main)
 
-verilate(cache SOURCES cache.sv SYSTEMC)
+verilate(cache SOURCES set.sv SYSTEMC)
 verilator_link_systemc(cache)
