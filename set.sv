@@ -5,17 +5,12 @@ module set #(
 )(
     input wire enable,
     input wire clock,
-    input wire [ADDR_WIDTH - 1:0] ch1_in_addr,
-    input wire [LINE_WIDTH - 1:0] ch1_in_val,
-    input wire ch1_read,
-    input wire ch1_write,
-    output reg ch1_hit,
-    output reg [LINE_WIDTH - 1:0] ch1_out_val,
-
-    input wire [ADDR_WIDTH - 1:0] ch2_in_addr,
-    input wire ch2_read,
-    output reg ch2_hit,
-    output reg [LINE_WIDTH - 1:0] ch2_out_val
+    input wire [ADDR_WIDTH - 1:0] in_addr,
+    input wire [LINE_WIDTH - 1:0] in_val,
+    input wire read,
+    input wire write,
+    output reg hit,
+    output reg [LINE_WIDTH - 1:0] out_val
 );
   typedef bit [ADDR_WIDTH - 1:0] addr_t;
   typedef bit [LINE_WIDTH - 1:0] val_t;
@@ -34,53 +29,49 @@ module set #(
 
   reg accumulator;
 
-  function automatic check_for_hit(integer ch);
+  function automatic check_for_hit();
     accumulator = 0;
 
     for (integer i = 0; i < K; i++) begin
-      accumulator = accumulator || (lines[i].addr ==
-        (ch == 1 ? ch1_in_addr : ch2_in_addr) && lines[i].valid);
+      accumulator |= lines[i].addr == in_addr && lines[i].valid;
     end
     check_for_hit = accumulator;
   endfunction
 
-  task automatic read (input addr_t addr, input integer channel);
-    if (channel == 1 && ch1_read || (channel == 2 && ch2_read)) begin
+  task automatic run_read(input addr_t addr);
+    if (read) begin
       for (integer i = 0; i < K; i++) begin
         if (lines[i].addr == addr && lines[i].valid) begin
-          if (channel == 1) ch1_out_val <= lines[i].val;
-          else if (channel == 2) ch2_out_val <= lines[i].val;
+          out_val <= lines[i].val;
         end
       end
 
-      if (channel == 1) ch1_hit <= check_for_hit(channel);
-      if (channel == 2) ch2_hit <= check_for_hit(channel);
+      hit <= check_for_hit();
     end
   endtask
 
   always @(posedge clock) begin
     if (enable) begin
-      read(ch1_in_addr, 1);
-      read(ch2_in_addr, 2);
+      run_read(in_addr);
 
-      if (ch1_write) begin
+      if (write) begin
         // We'll match on where we are in the state machine.
         unique case (write_state)
         0: begin
           // If we're just receiving the write request, look for any matches.
           integer i;
           for (i = 0; i < K; i++) begin
-            if (lines[i].addr == ch1_in_addr) begin
-              lines[i].val <= ch1_in_val;
+            if (lines[i].addr == in_addr) begin
+              lines[i].val <= in_val;
               lines[i].clock <= 1;
               lines[i].valid <= 1;
             end
           end
 
-          ch1_hit <= check_for_hit(1);
+          hit <= check_for_hit();
 
           // Set the write_state high iff we haven't hit anything in the cache.
-          write_state <= !check_for_hit(1);
+          write_state <= !check_for_hit();
         end
 
         1: begin
@@ -91,12 +82,12 @@ module set #(
             if (i == integer'(clock_ptr)) begin
               if (lines[i].clock == 0) begin
                 // Evict what we're looking at.
-                lines[i].addr <= ch1_in_addr;
-                lines[i].val <= ch1_in_val;
+                lines[i].addr <= in_addr;
+                lines[i].val <= in_val;
                 lines[i].valid <= 1;
                 lines[i].clock <= 1;
 
-                ch1_hit <= 1;
+                hit <= 1;
                 write_state <= 0;
               end else lines[i].clock <= 0; // Decrement the CLOCK counter.
             end;
