@@ -14,12 +14,14 @@ module cache #(
 );
   for (genvar i = 0; i < SET_COUNT; i = i + 1) begin:g_sets
     wire addressed;
-    assign addressed = in_addr[$clog2(SET_COUNT) - 1:0] == i;
+    assign addressed = in_addr[(ADDR_WIDTH - 1):(ADDR_WIDTH - $clog2(SET_COUNT))] == i;
 
-    set s (
+    set #(
+        .ADDR_WIDTH(ADDR_WIDTH - $clog2(SET_COUNT))
+    ) s (
         .enable(addressed),
         .clock(clock),
-        .in_addr(in_addr),
+        .in_addr(in_addr[ADDR_WIDTH - $clog2(SET_COUNT) - 1:0]),
         .in_val(in_val),
         .read(read),
         .write(write),
