@@ -1,3 +1,5 @@
+`include "set.vh"
+
 module set #(
   parameter integer ADDR_WIDTH = 8,
   parameter integer LINE_WIDTH = 32,
@@ -9,6 +11,7 @@ module set #(
     input wire [LINE_WIDTH - 1:0] in_val,
     input wire read,
     input wire write,
+    input reg [$bits(bus_prefix_t) + ADDR_WIDTH - 1:0] bus,
     output reg hit,
     output reg [LINE_WIDTH - 1:0] out_val
 );
@@ -54,10 +57,7 @@ module set #(
     end
   endtask
 
-  always @(posedge clock) begin
-    if (enable) begin
-      run_read(in_addr);
-
+  task automatic run_write();
       if (write) begin
         // We'll match on where we are in the state machine.
         unique case (write_state)
@@ -99,6 +99,24 @@ module set #(
 
         endcase
       end
+  endtask
+
+  task automatic run_coherency();
+    bus_prefix_t prefix = bus[ADDR_WIDTH + $size(bus_prefix_t) - 1:ADDR_WIDTH];
+    unique case (prefix.ev)
+    E_NOTHING: ;
+    E_BUS_RD: begin end
+    E_PR_RD: begin end
+    E_BUS_WR: begin end
+    E_PR_WR: begin end
+    endcase
+  endtask
+
+  always @(posedge clock) begin
+    if (enable) begin
+      run_read(in_addr);
+      run_write();
+      run_coherency();
     end
   end
 endmodule
