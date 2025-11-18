@@ -59,8 +59,7 @@ module set #(
         unique case (write_state)
         0: begin
           // If we're just receiving the write request, look for any matches.
-          integer i;
-          for (i = 0; i < K; i++) begin
+          for (integer i = 0; i < K; i++) begin
             if (lines[i].addr == in_addr) begin
               lines[i].val <= in_val;
               lines[i].clock <= 1;

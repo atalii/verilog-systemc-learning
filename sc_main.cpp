@@ -96,6 +96,23 @@ TEST_F(CacheTest, endToEnd) {
   ASSERT_EQ(get(100), std::nullopt);
 }
 
+TEST_F(CacheTest, sets_function_as_expected) {
+  // We have no offset, so our index is the LSB.
+  put(0b000, 0x11);
+  put(0b010, 0x12);
+  put(0b100, 0x13);
+
+  // We'll have filled the first set, so this will miss by CLOCK.
+  ASSERT_EQ(get(0b000), std::nullopt);
+
+  // Inserting to the second set won't perturb the first.
+  put(0b001, 0x21);
+  ASSERT_EQ(get(0b001), std::optional{0x21});
+  ASSERT_EQ(get(0b010), std::optional{0x12});
+  ASSERT_EQ(get(0b100), std::optional{0x13});
+
+}
+
 int sc_main(int argc, char **argv) {
   Verilated::traceEverOn(true);
   Verilated::commandArgs(argc, argv);
