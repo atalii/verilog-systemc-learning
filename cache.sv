@@ -15,7 +15,7 @@ module cache #(
   for (genvar i = 0; i < SET_COUNT; i = i + 1) begin:g_sets
     wire addressed;
 
-    // Since there's no offset, the cache index are the least significant bytes.
+    // Since there's no offset, the cache index occupies the least significant bits.
     assign addressed = in_addr[($clog2(SET_COUNT) - 1):0] == i;
 
     set #(
