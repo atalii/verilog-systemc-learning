@@ -15,11 +15,15 @@ module set #(
   typedef bit [ADDR_WIDTH - 1:0] addr_t;
   typedef bit [LINE_WIDTH - 1:0] val_t;
 
+  typedef enum {
+    ST_INVALID, ST_VALID
+  } state_t;
+
   typedef struct packed {
     val_t val;
     addr_t addr;
     bit clock;
-    bit valid;
+    state_t state;
   } line_t;
 
   line_t lines[K];
@@ -33,7 +37,7 @@ module set #(
     accumulator = 0;
 
     for (integer i = 0; i < K; i++) begin
-      accumulator |= lines[i].addr == in_addr && lines[i].valid;
+      accumulator |= lines[i].addr == in_addr && lines[i].state == ST_VALID;
     end
     check_for_hit = accumulator;
   endfunction
@@ -41,7 +45,7 @@ module set #(
   task automatic run_read(input addr_t addr);
     if (read) begin
       for (integer i = 0; i < K; i++) begin
-        if (lines[i].addr == addr && lines[i].valid) begin
+        if (lines[i].addr == addr && lines[i].state == ST_VALID) begin
           out_val <= lines[i].val;
         end
       end
@@ -63,7 +67,7 @@ module set #(
             if (lines[i].addr == in_addr) begin
               lines[i].val <= in_val;
               lines[i].clock <= 1;
-              lines[i].valid <= 1;
+              lines[i].state <= ST_VALID;
             end
           end
 
@@ -83,7 +87,7 @@ module set #(
                 // Evict what we're looking at.
                 lines[i].addr <= in_addr;
                 lines[i].val <= in_val;
-                lines[i].valid <= 1;
+                lines[i].state <= ST_VALID;
                 lines[i].clock <= 1;
 
                 hit <= 1;
