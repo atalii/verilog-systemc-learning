@@ -55,50 +55,51 @@ module set #(
   endtask
 
   always @(posedge clock) begin
-    if (enable) begin
+    if (enable)
       run_read(in_addr);
+  end
 
-      if (write) begin
-        // We'll match on where we are in the state machine.
-        unique case (write_state)
-        0: begin
-          // If we're just receiving the write request, look for any matches.
-          for (integer i = 0; i < K; i++) begin
-            if (lines[i].addr == in_addr) begin
-              lines[i].val <= in_val;
-              lines[i].clock <= 1;
-              lines[i].state <= ST_VALID;
-            end
-          end
-
-          hit <= check_for_hit();
-
-          // Set the write_state high iff we haven't hit anything in the cache.
-          write_state <= !check_for_hit();
-        end
-
-        1: begin
-          // CLOCK through the two values.
-          clock_ptr <= clock_ptr + 1;
-
-          for (integer i = 0; i < K; i++) begin
-            if (i == integer'(clock_ptr)) begin
-              if (lines[i].clock == 0) begin
-                // Evict what we're looking at.
-                lines[i].addr <= in_addr;
-                lines[i].val <= in_val;
-                lines[i].state <= ST_VALID;
-                lines[i].clock <= 1;
-
-                hit <= 1;
-                write_state <= 0;
-              end else lines[i].clock <= 0; // Decrement the CLOCK counter.
-            end;
+  always @(posedge clock) begin
+    if (enable && write) begin
+      // We'll match on where we are in the state machine.
+      unique case (write_state)
+      0: begin
+        // If we're just receiving the write request, look for any matches.
+        for (integer i = 0; i < K; i++) begin
+          if (lines[i].addr == in_addr) begin
+            lines[i].val <= in_val;
+            lines[i].clock <= 1;
+            lines[i].state <= ST_VALID;
           end
         end
 
-        endcase
+        hit <= check_for_hit();
+
+        // Set the write_state high iff we haven't hit anything in the cache.
+        write_state <= !check_for_hit();
       end
+
+      1: begin
+        // CLOCK through the two values.
+        clock_ptr <= clock_ptr + 1;
+
+        for (integer i = 0; i < K; i++) begin
+          if (i == integer'(clock_ptr)) begin
+            if (lines[i].clock == 0) begin
+              // Evict what we're looking at.
+              lines[i].addr <= in_addr;
+              lines[i].val <= in_val;
+              lines[i].state <= ST_VALID;
+              lines[i].clock <= 1;
+
+              hit <= 1;
+              write_state <= 0;
+            end else lines[i].clock <= 0; // Decrement the CLOCK counter.
+          end;
+        end
+      end
+
+      endcase
     end
   end
 endmodule
