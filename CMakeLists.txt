@@ -22,5 +22,6 @@ enable_testing()
 add_executable(cache sc_main.cpp)
 target_link_libraries(cache PRIVATE GTest::gtest_main)
 
-verilate(cache SOURCES cache.sv set.sv TOP_MODULE cache SYSTEMC TRACE)
+verilate(cache SOURCES bus.sv TOP_MODULE bus SYSTEMC)
+verilate(cache SOURCES cache.sv set.sv bus.sv TOP_MODULE cache SYSTEMC TRACE)
 verilator_link_systemc(cache)
