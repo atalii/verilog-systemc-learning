@@ -1,9 +1,9 @@
 module bus #(
-    parameter integer WIDTH = 2,
+    parameter integer WIDTH = 10,
     parameter integer CLIENTS = 4
 )(
     input wire clock,
-    input logic [WIDTH - 1:0] messages[CLIENTS],
+    input reg [WIDTH - 1:0] messages[CLIENTS],
     input logic write[CLIENTS],
     output logic [WIDTH - 1:0] message,
     output logic sent[CLIENTS]

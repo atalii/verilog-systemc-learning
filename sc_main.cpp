@@ -45,6 +45,9 @@ struct CacheTest : public testing::Test {
     bank.in_addr(CacheTest::in_addr);
     bank.clock(CacheTest::clock);
 
+    bank.bus_tx(messages[0]);
+    bank.bus_tx_enable(bus_write[0]);
+    bank.bus_tx_sent(sent[0]);
   }
 
   void put(uint32_t addr, uint32_t val) {
@@ -106,7 +109,8 @@ TEST_F(CacheTest, startsEmpty) {
 }
 
 TEST_F(CacheTest, busFunctioning) {
-  sendSync(0, 1);
+  // Always assume that client 2/3 is disconnected.
+  sendSync(2, 0x10);
 }
 
 TEST_F(CacheTest, endToEnd) {
