@@ -9,6 +9,7 @@ module set #(
     input wire [LINE_WIDTH - 1:0] in_val,
     input wire read,
     input wire write,
+    input wire invalidate,
     output reg hit,
     output reg [LINE_WIDTH - 1:0] out_val
 );
@@ -42,21 +43,24 @@ module set #(
     check_for_hit = accumulator;
   endfunction
 
-  task automatic run_read(input addr_t addr);
-    if (read) begin
+  always @(posedge clock) begin
+    if (enable && read) begin
       for (integer i = 0; i < K; i++) begin
-        if (lines[i].addr == addr && lines[i].state == ST_VALID) begin
+        if (lines[i].addr == in_addr && lines[i].state == ST_VALID) begin
           out_val <= lines[i].val;
         end
       end
 
       hit <= check_for_hit();
     end
-  endtask
+  end
 
   always @(posedge clock) begin
-    if (enable)
-      run_read(in_addr);
+    if (enable && invalidate) begin
+      for (integer i = 0; i < K; i++) begin
+        if (lines[i].addr == in_addr) lines[i].state <= ST_INVALID;
+      end
+    end
   end
 
   always @(posedge clock) begin
